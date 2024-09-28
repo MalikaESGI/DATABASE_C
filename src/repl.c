@@ -62,6 +62,13 @@ void execute_statement(Statement* statement) {
                 return;
             }
 
+            // Vérifier si la table existe déjà dans le B-tree
+            if (table_exists(btree, table_name)) {
+                printf("Erreur : la table '%s' existe deja.\n", table_name);
+                return;
+            }
+
+             // Si la table n'existe pas, crée la nouvelle table
             Table* table = create_table(table_name);
             add_field(table, "id", "int(AUTO)");
             printf("Table '%s' creee. Merci d'indiquer les champs.\n", table->table_name);
@@ -69,22 +76,23 @@ void execute_statement(Statement* statement) {
             char field_name[100];
             char field_type[100];
 
+            //saisie des champs
             while (true) {
-                printf("Nom du champ (ou 'q' pour terminer) : ");
+                printf("-->Nom du champ (ou 'q' pour terminer) : ");
                 scanf("%s", field_name);
 
                 if (strcmp(field_name, "q") == 0) {
                     break;
                 }
 
-                printf("Type du champ : ");
+                printf("--->Type du champ : ");
                 scanf("%s", field_type);
 
                 add_field(table, field_name, field_type);
             }
 
             insert_btree(btree, table);
-            printf("Table %s créée avec succès.\n", table->table_name);
+            printf("\n<---Table %s creee avec succes.--->\n", table->table_name);
             print_table(table);
             break;
         }

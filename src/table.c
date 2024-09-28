@@ -21,7 +21,7 @@ void add_field(Table* table, const char* field_name, const char* field_type) {
 
 void print_table(Table* table) {
     printf("+--------------------------------+\n");
-    printf("|           Table: %s         |\n", table->table_name);
+    printf("|         Table: %s         |\n", table->table_name);
     printf("+--------------------------------+\n");
 
     printf("| %-15s | %-12s |\n", "Field Name", "Field Type");
