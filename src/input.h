@@ -14,5 +14,6 @@ typedef struct {
 InputBuffer* new_input_buffer();
 void read_input(InputBuffer* input_buffer);
 void close_input_buffer(InputBuffer* input_buffer);
+void to_uppercase(char* str);
 
 #endif // INPUT_H

@@ -5,7 +5,8 @@
 #include <unistd.h>
 #include "table.h"
 #include "btree.h"
-#include "input.h" 
+#include "input.h"
+
 
 InputBuffer* input_buffer;
 BTree* btree;
@@ -35,6 +36,10 @@ MetaCommandResult do_meta_command(InputBuffer* input_buffer) {
 }
 
 PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement) {
+    
+    // Convertir la commande en majuscules
+    to_uppercase(input_buffer->buffer);
+
     if (strncmp(input_buffer->buffer, "INSERT", 6) == 0) {
         statement->type = STATEMENT_INSERT;
         return PREPARE_SUCCESS;
