@@ -18,7 +18,12 @@ typedef enum {
 
 typedef enum { PREPARE_SUCCESS, PREPARE_UNRECOGNIZED_STATEMENT } PrepareResult;
 
-typedef enum { STATEMENT_INSERT, STATEMENT_SELECT, STATEMENT_CREATE_TABLE } StatementType;
+typedef enum { 
+    STATEMENT_INSERT,
+    STATEMENT_SELECT,
+    STATEMENT_CREATE_TABLE,
+    STATEMENT_SHOW_TABLES
+ } StatementType;
 
 typedef struct {
     StatementType type;
@@ -50,6 +55,10 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
     }
         if (strncmp(input_buffer->buffer, "CREATE TABLE", 12) == 0) {
         statement->type = STATEMENT_CREATE_TABLE;
+        return PREPARE_SUCCESS;
+    }
+    if (strcmp(input_buffer->buffer, "SHOW TABLES") == 0) {
+        statement->type = STATEMENT_SHOW_TABLES;
         return PREPARE_SUCCESS;
     }
     return PREPARE_UNRECOGNIZED_STATEMENT;
@@ -101,6 +110,11 @@ void execute_statement(Statement* statement) {
             print_table(table);
             break;
         }
+
+        case (STATEMENT_SHOW_TABLES):
+            printf("Liste des tables dans la base de données :\n");
+            show_tables(btree->root);  
+            break;
 
         case (STATEMENT_SELECT):
             printf("Commande SELECT reçue.\n");

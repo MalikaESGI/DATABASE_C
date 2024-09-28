@@ -1,5 +1,6 @@
 #include "btree.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 BTree* create_btree(int t) {
     BTree* tree = (BTree*)malloc(sizeof(BTree));
@@ -66,5 +67,31 @@ int table_exists(BTree* tree, const char* table_name) {
 
     return 0;  // La table n'a pas été trouvée
 }
+
+
+void show_tables(BTreeNode* node) {
+    if (node == NULL) {
+        printf("Aucune table n'existe dans la base de données.\n");
+        return;
+    }
+    printf("-----------------\n");
+    printf("|    DB         |\n");
+    printf("-----------------\n");
+
+  
+    for (int i = 0; i < node->num_tables; i++) {
+        printf("| %-13s |\n", node->tables[i]->table_name);
+    }
+
+    // Si ce n'est pas une feuille, parcourir les enfants récursivement
+    if (!node->is_leaf) {
+        for (int i = 0; i < node->num_children; i++) {
+            show_tables(node->children[i]);  // Parcourir chaque enfant
+        }
+    }
+    printf("-----------------\n");
+}
+
+
 
 

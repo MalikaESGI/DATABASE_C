@@ -19,5 +19,7 @@ typedef struct {
 BTree* create_btree(int t);
 void insert_btree(BTree* tree, Table* table);
 int table_exists(BTree* tree, const char* table_name);
+void show_tables(BTreeNode* node);
+
 
 #endif
