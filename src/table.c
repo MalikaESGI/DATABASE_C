@@ -8,6 +8,7 @@ Table* create_table(const char* table_name) {
     table->table_name = strdup(table_name);
     table->fields = NULL;
     table->num_fields = 0;
+     table->next_id = 1;
     return table;
 }
 
@@ -33,3 +34,33 @@ void print_table(Table* table) {
 
     printf("+-------------------+------------+\n");
 }
+
+
+void insert_record(Table* table, char** values, int num_values) {
+    if (num_values != table->num_fields) {
+        printf("Erreur : le nombre de valeurs ne correspond pas au nombre de champs dans la table (sans compter l'id).\n");
+        return;
+    }
+
+    // Allouer de l'espace pour un nouvel enregistrement
+    table->records = realloc(table->records, sizeof(Record) * (table->num_records + 1));
+    Record* new_record = &table->records[table->num_records];
+
+    // Attribuer l'id auto-incrémenté
+    new_record->id = table->next_id;
+    table->next_id++;  // Incrémenter l'id pour la prochaine insertion
+
+    new_record->values = malloc(sizeof(char*) * num_values);
+    new_record->num_values = num_values;
+
+    // Stocker les valeurs dans le nouvel enregistrement (sans `id`)
+    for (int i = 0; i < num_values; i++) {
+        new_record->values[i] = strdup(values[i]);  // Dupliquer la valeur dans la structure
+    }
+
+    // Augmenter le nombre d'enregistrements dans la table
+    table->num_records++;
+}
+
+
+
