@@ -25,5 +25,6 @@ Table* create_table(const char* table_name);
 void add_field(Table* table, const char* field_name, const char* field_type);
 void print_table(Table* table);
 void insert_record(Table* table, char** values, int num_values);
+void print_records(Table* table) ;
 
 #endif

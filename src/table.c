@@ -62,5 +62,33 @@ void insert_record(Table* table, char** values, int num_values) {
     table->num_records++;
 }
 
+void print_records(Table* table) {
+    if (table->num_records == 0) {
+        printf("Aucun enregistrement dans la table '%s'.\n", table->table_name);
+        return;
+    }
+
+    printf("-----------------------------\n");
+   
+
+    // Afficher les noms des champs
+    for (int i = 0; i < table->num_fields; i++) {
+        printf("%s  |  ", table->fields[i].field_name);
+    }
+    printf("\n-----------------------------\n");
+
+    // Afficher les enregistrements
+    for (int i = 0; i < table->num_records; i++) {
+        printf("| %-3d | ", table->records[i].id);  // Afficher l'id
+
+        for (int j = 0; j < table->records[i].num_values; j++) {
+            printf("%s  |  ", table->records[i].values[j]);  // Afficher les valeurs des champs
+        }
+        printf("\n");
+    }
+    printf("-----------------------------\n");
+}
+
+
 
 
