@@ -22,7 +22,9 @@ typedef enum {
     STATEMENT_INSERT,
     STATEMENT_SELECT,
     STATEMENT_CREATE_TABLE,
-    STATEMENT_SHOW_TABLES
+    STATEMENT_SHOW_TABLES,
+    STATEMENT_SELECT_WHERE,
+    
  } StatementType;
 
 typedef struct {
@@ -50,10 +52,17 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
         return PREPARE_SUCCESS;
     }
     if (strncmp(input_buffer->buffer, "SELECT * FROM", 13) == 0) {
-        statement->type = STATEMENT_SELECT;
+        // Vérifier si la commande contient "WHERE" après "SELECT * FROM"
+        char* where_clause = strstr(input_buffer->buffer, "WHERE");
+        
+        if (where_clause != NULL) {
+            statement->type = STATEMENT_SELECT_WHERE;
+        } else {
+            statement->type = STATEMENT_SELECT;
+        }
         return PREPARE_SUCCESS;
     }
-        if (strncmp(input_buffer->buffer, "CREATE TABLE", 12) == 0) {
+    if (strncmp(input_buffer->buffer, "CREATE TABLE", 12) == 0) {
         statement->type = STATEMENT_CREATE_TABLE;
         return PREPARE_SUCCESS;
     }
@@ -210,10 +219,29 @@ void execute_statement(Statement* statement) {
         }
 
         // Afficher les enregistrements de la table
-        print_records(table);
+        select_from_table(table);
         break;
     }
 
+        case (STATEMENT_SELECT_WHERE): {
+    
+            char table_name[100], field_name[100], value[100];
+            int matched = sscanf(input_buffer->buffer, "SELECT * FROM %99s WHERE %99s = %99s", table_name, field_name, value);
+
+            if (matched != 3) {
+                printf("Erreur de syntaxe dans la commande SELECT avec WHERE.\n");
+                return;
+            }
+
+            Table* table = search_btree(btree, table_name);
+            if (table == NULL) {
+                printf("Erreur : la table '%s' n'existe pas.\n", table_name);
+                return;
+            }
+            
+            select_from_table_where(table, field_name, value);
+            break;
+        }
         default:
             printf("Commande non reconnue.\n");
             break;

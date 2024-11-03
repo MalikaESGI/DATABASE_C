@@ -120,7 +120,7 @@ void save_record_to_file(Table* table, char** values, int num_values) {
 }
 
 
-void print_records(Table* table) {
+void select_from_table(Table* table) {
     if (table->num_records == 0) {
         printf("Aucun enregistrement dans la table '%s'.\n", table->table_name);
         return;
@@ -156,6 +156,62 @@ void print_records(Table* table) {
     }
     printf("\n");
 }
+
+
+void select_from_table_where(Table* table, const char* field_name, const char* value) {
+    // Trouver l'index du champ spécifié
+    int field_index = -1;
+    for (int i = 0; i < table->num_fields; i++) {
+        if (strcasecmp(table->fields[i].field_name, field_name) == 0) {//strcasecmp pour ignorer la casse
+            field_index = i;
+            break;
+        }
+    }
+
+    if (field_index == -1) {
+        printf("Erreur : Champ '%s' non trouvé dans la table '%s'.\n", field_name, table->table_name);
+        return;
+    }
+
+    //champs : en-têtes de la table
+    printf("+");
+    for (int i = 0; i < table->num_fields; i++) {
+        printf("---------------+");
+    }
+    printf("\n|");
+    for (int i = 0; i < table->num_fields; i++) {
+        printf(" %-13s |", table->fields[i].field_name);
+    }
+    printf("\n+");
+    for (int i = 0; i < table->num_fields; i++) {
+        printf("---------------+");
+    }
+    printf("\n");
+
+    // afficher selon la condition WHERE
+    int match_found = 0;
+    for (int i = 0; i < table->num_records; i++) {
+        if (strcasecmp(table->records[i].values[field_index], value) == 0) {
+            printf("|");
+            for (int j = 0; j < table->num_fields; j++) {
+                printf(" %-13s |", table->records[i].values[j]);
+            }
+            printf("\n");
+            match_found = 1;
+        }
+    }
+
+    if (!match_found) {
+        printf("Aucun enregistrement trouvé pour %s = %s.\n", field_name, value);
+    }
+    
+    printf("+");
+    for (int i = 0; i < table->num_fields; i++) {
+        printf("---------------+");
+    }
+    printf("\n");
+}
+
 
 
 
