@@ -57,7 +57,7 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
         statement->type = STATEMENT_CREATE_TABLE;
         return PREPARE_SUCCESS;
     }
-    if (strcmp(input_buffer->buffer, "SHOW TABLES") == 0) {
+    if (strncmp(input_buffer->buffer, "SHOW TABLES", 11) == 0) {
         statement->type = STATEMENT_SHOW_TABLES;
         return PREPARE_SUCCESS;
     }
@@ -128,41 +128,63 @@ void execute_statement(Statement* statement) {
             break;
         }
 
-        case (STATEMENT_INSERT): {
-            char table_name[100];
-            char values[100];
+case (STATEMENT_INSERT): {
+    char table_name[100];
+    char values[100];
 
-            // Exemple : INSERT INTO users VALUES ('malika', 30)
-            int matched = sscanf(input_buffer->buffer, "INSERT INTO %99s VALUES (%99[^\n])", table_name, values);
+    int matched = sscanf(input_buffer->buffer, "INSERT INTO %99s VALUES (%99[^\n])", table_name, values);
 
-            if (matched != 2) {
-                printf("Erreur de syntaxe dans la commande INSERT.\n");
-                return;
-            }
+    if (matched != 2) {
+        printf("Erreur de syntaxe dans la commande INSERT.\n");
+        return;
+    }
 
-            // Rechercher la table dans le B-tree
-            Table* table = search_btree(btree, table_name);
-            if (table == NULL) {
-                printf("Erreur : la table '%s' n'existe pas.\n", table_name);
-                return;
-            }
+    // Rechercher la table dans le B-tree
+    Table* table = search_btree(btree, table_name);
+    if (table == NULL) {
+        printf("Erreur : la table '%s' n'existe pas.\n", table_name);
+        return;
+    }
 
-            // Sauvegarder l'insertion dans db.txt
-            FILE *fp = fopen("db.txt", "a");
-            if (fp == NULL) {
-                printf("Erreur d'ouverture du fichier db.txt.\n");
-                return;
-            }
+    // Le nombre de champs dans la table
+    int expected_values_count = table->num_fields;
 
-            // Incrémenter automatiquement l'ID
-            int id = table->num_records + 1;
-            fprintf(fp, "%d, %s\n", id, values);  // Écrire l'ID auto-incrémenté et les valeurs
-            fclose(fp);
+    // tableau pour styocker les valeurs après la découpe
+    char* values_array[expected_values_count];
+    int index = 0;
 
-            table->num_records++;  // Incrémenter le nombre d'enregistrements
-            printf("Insertion réussie dans la table '%s'.\n", table_name);
-            break;
+    //strtok pour découper les valeurs
+    char* token = strtok(values, ",");
+    while (token != NULL) {
+        while (*token == ' ') token++;  // Retirer les espaces autour de chaque valeur
+        values_array[index] = strdup(token);
+        index++;
+        token = strtok(NULL, ",");
+    }
+    printf("%d, %d\n", index, expected_values_count); 
+
+    // Vérification du nombre de valeurs saisies
+    if (index != expected_values_count) {
+        printf("Erreur : le nombre de valeurs ne correspond pas aux champs de la table.\n");
+        
+        // Libérer la mémoire allouée
+        for (int i = 0; i < index; i++) {
+            free(values_array[i]);
         }
+        
+        return;
+    }
+
+    if (insert_record(table, values_array, expected_values_count) == 0) {
+        printf("Insertion réussie dans la table '%s'.\n", table_name);
+        save_record_to_file(table, values_array, expected_values_count);
+    }
+    for (int i = 0; i < expected_values_count; i++) {
+        free(values_array[i]);
+    }
+
+    break;
+   }
 
         case (STATEMENT_SHOW_TABLES):
             printf("Liste des tables dans la base de donnees :\n");
