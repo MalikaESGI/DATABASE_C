@@ -126,25 +126,35 @@ void print_records(Table* table) {
         return;
     }
 
-    printf("-----------------------------\n");
-   
-
-    // Afficher les noms des champs
+    // les champs
+    printf("+");
     for (int i = 0; i < table->num_fields; i++) {
-        printf("%s  |  ", table->fields[i].field_name);
+        printf("---------------+");
     }
-    printf("\n-----------------------------\n");
+    printf("\n|");
 
-    // Afficher les enregistrements
+    for (int i = 0; i < table->num_fields; i++) {
+        printf(" %-13s |", table->fields[i].field_name);
+    }
+    printf("\n+");
+    for (int i = 0; i < table->num_fields; i++) {
+        printf("---------------+");
+    }
+    printf("\n");
+
     for (int i = 0; i < table->num_records; i++) {
-        printf("| %-3d | ", table->records[i].id);  // Afficher l'id
-
+        printf("|");
         for (int j = 0; j < table->records[i].num_values; j++) {
-            printf("%s  |  ", table->records[i].values[j]);  // Afficher les valeurs des champs
+            printf(" %-13s |", table->records[i].values[j]);
         }
         printf("\n");
     }
-    printf("-----------------------------\n");
+
+    printf("+");
+    for (int i = 0; i < table->num_fields; i++) {
+        printf("---------------+");
+    }
+    printf("\n");
 }
 
 

@@ -128,7 +128,7 @@ void execute_statement(Statement* statement) {
             break;
         }
 
-case (STATEMENT_INSERT): {
+        case (STATEMENT_INSERT): {
     char table_name[100];
     char values[100];
 
@@ -186,16 +186,15 @@ case (STATEMENT_INSERT): {
     break;
    }
 
-        case (STATEMENT_SHOW_TABLES):
+        case (STATEMENT_SHOW_TABLES):{
             printf("Liste des tables dans la base de donnees :\n");
             show_tables(btree->root);  
             break;
-
+        }
 
         case (STATEMENT_SELECT): {
         char table_name[100];
 
-        // Exemple : SELECT * FROM users
         int matched = sscanf(input_buffer->buffer, "SELECT * FROM %99s", table_name);
 
         if (matched != 1) {
