@@ -48,8 +48,7 @@ void insert_btree(BTree* tree, Table* table) {
                 node->num_children += 1;
             }
         } else {
-            // Cas où le nœud actuel n'est pas une feuille, il faut gérer la scission
-            printf("Erreur: le nœud n'est pas une feuille, gestion de la scission à implémenter.\n");
+            printf("Erreur: le nœud n'est pas une feuille\n");
         }
     }
 }
@@ -71,7 +70,7 @@ int table_exists(BTree* tree, const char* table_name) {
             return 0;  // Si c'est une feuille et qu'on ne l'a pas trouvée, elle n'existe pas
         } else {
             // Sinon, parcourir les enfants pour continuer la recherche
-            node = node->children[0];  // Exemple de traversée (à adapter)
+            node = node->children[0];
         }
     }
 
@@ -79,13 +78,15 @@ int table_exists(BTree* tree, const char* table_name) {
 }
 
 void show_tables_recursive(BTreeNode* node) {
-    // Afficher la table dans ce nœud
+    // Vérifier que le nœud et la table sont pas null
+    if (node == NULL || node->table == NULL) {
+        return;
+    }
     printf("| %-13s |\n", node->table->table_name);
 
-    // Si ce nœud a des enfants, les parcourir récursivement
     if (!node->is_leaf) {
         for (int i = 0; i < node->num_children; i++) {
-            show_tables_recursive(node->children[i]);  // Parcourir chaque enfant
+            show_tables_recursive(node->children[i]);
         }
     }
 }
@@ -117,7 +118,6 @@ Table* search_btree(BTree* tree, const char* table_name) {
 
     BTreeNode* current_node = tree->root;
 
-    // Parcourir récursivement l'arbre
     while (current_node != NULL) {
         // Vérifier si le nœud actuel contient la table recherchée
         if (strcmp(current_node->table->table_name, table_name) == 0) {
@@ -129,8 +129,7 @@ Table* search_btree(BTree* tree, const char* table_name) {
             return NULL;  // Si c'est une feuille et qu'on ne l'a pas trouvée, elle n'existe pas
         } else {
             // Sinon, on parcourt les enfants pour continuer la recherche
-            // Pour simplifier, on parcourt tous les enfants séquentiellement
-            int found = 0;
+            // Pour simplifier, on parcourt tous les enfants
             for (int i = 0; i < current_node->num_children; i++) {
                 BTreeNode* child_node = current_node->children[i];
                 if (child_node != NULL && strcmp(child_node->table->table_name, table_name) == 0) {
@@ -144,9 +143,67 @@ Table* search_btree(BTree* tree, const char* table_name) {
     return NULL;  // Table non trouvée
 }
 
+void delete_table(BTree* tree, const char* table_name) {
+    if (tree->root == NULL) {
+        printf("Erreur : La base de données est vide.\n");
+        return;
+    }
 
+    BTreeNode* node = tree->root;
+    BTreeNode* parent = NULL;
+    int found = 0;
 
+    // Parcourir le B-tree pour trouver le nœud de la table à supprimer
+    while (node != NULL) {
+        if (node->table != NULL && strcmp(node->table->table_name, table_name) == 0) {
+            
+            delete_all_records(node->table); // Supprimer tous les enregistrements de la table
 
+            // Libérer la mémoire pour les champs de la table
+            for (int i = 0; i < node->table->num_fields; i++) {
+                free(node->table->fields[i].field_name);
+                free(node->table->fields[i].field_type);
+            }
+            free(node->table->fields);
 
+            // Libérer le nom de la table et la structure elle-même
+            free(node->table->table_name);
+            free(node->table);
+            node->table = NULL;  // Retirer la référence de la table dans le B-tree
 
+            found = 1;
+            printf("Table '%s' supprimée avec succès\n", table_name);
+
+            // Si le nœud n'a pas d'enfants, on pourrait le retirer du B-tree
+            if (node->num_children == 0 && parent != NULL) {
+                for (int i = 0; i < parent->num_children; i++) {
+                    if (parent->children[i] == node) {
+                        free(parent->children[i]);
+                        parent->children[i] = NULL;
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+
+        // Parcours des enfants
+        int child_found = 0;
+        for (int i = 0; i < node->num_children; i++) {
+            if (node->children[i] != NULL) {
+                parent = node;
+                node = node->children[i];
+                child_found = 1;
+                break;
+            }
+        }
+        if (!child_found) {
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Table '%s' non trouvée dans la base de données\n", table_name);
+    }
+}
 

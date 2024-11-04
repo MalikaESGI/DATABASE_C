@@ -27,5 +27,6 @@ int insert_record(Table* table, char** values, int num_values);
 void save_record_to_file(Table* table, char** values, int num_values);
 void select_from_table(Table* table);
 void select_from_table_where(Table* table, const char* field_name, const char* value);
+void delete_all_records(Table* table);
 
 #endif

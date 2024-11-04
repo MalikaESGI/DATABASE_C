@@ -13,10 +13,11 @@ typedef struct BTreeNode {
 
 typedef struct {
     BTreeNode* root;
-    int t;  // Le degré minimum du B-tree
+    int t;  // le minimum du B-tree
 } BTree;
 
 BTree* create_btree(int t);
+void delete_table(BTree* tree, const char* table_name);
 void insert_btree(BTree* tree, Table* table);
 int table_exists(BTree* tree, const char* table_name);
 void show_tables(BTreeNode* node);

@@ -24,6 +24,9 @@ typedef enum {
     STATEMENT_CREATE_TABLE,
     STATEMENT_SHOW_TABLES,
     STATEMENT_SELECT_WHERE,
+    STATEMENT_DELETE_BY_ID,
+    STATEMENT_DELETE_ALL,
+    STATEMENT_DROP_TABLE   
     
  } StatementType;
 
@@ -68,6 +71,21 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
     }
     if (strncmp(input_buffer->buffer, "SHOW TABLES", 11) == 0) {
         statement->type = STATEMENT_SHOW_TABLES;
+        return PREPARE_SUCCESS;
+    }
+
+    if (strncmp(input_buffer->buffer, "DELETE FROM", 11) == 0) 
+    {
+        if (strstr(input_buffer->buffer, "WHERE")) {
+            statement->type = STATEMENT_DELETE_BY_ID;
+        } else {
+            statement->type = STATEMENT_DELETE_ALL;
+        }
+        return PREPARE_SUCCESS;
+    }
+
+    if (strncmp(input_buffer->buffer, "DROP TABLE", 10) == 0) {
+        statement->type = STATEMENT_DROP_TABLE;
         return PREPARE_SUCCESS;
     }
     return PREPARE_UNRECOGNIZED_STATEMENT;
@@ -138,62 +156,62 @@ void execute_statement(Statement* statement) {
         }
 
         case (STATEMENT_INSERT): {
-    char table_name[100];
-    char values[100];
+            char table_name[100];
+            char values[100];
 
-    int matched = sscanf(input_buffer->buffer, "INSERT INTO %99s VALUES (%99[^\n])", table_name, values);
+            int matched = sscanf(input_buffer->buffer, "INSERT INTO %99s VALUES (%99[^\n])", table_name, values);
 
-    if (matched != 2) {
-        printf("Erreur de syntaxe dans la commande INSERT.\n");
-        return;
-    }
+            if (matched != 2) {
+                printf("Erreur de syntaxe dans la commande INSERT.\n");
+                return;
+            }
 
-    // Rechercher la table dans le B-tree
-    Table* table = search_btree(btree, table_name);
-    if (table == NULL) {
-        printf("Erreur : la table '%s' n'existe pas.\n", table_name);
-        return;
-    }
+            // Rechercher la table dans le B-tree
+            Table* table = search_btree(btree, table_name);
+            if (table == NULL) {
+                printf("Erreur : la table '%s' n'existe pas.\n", table_name);
+                return;
+            }
 
-    // Le nombre de champs dans la table
-    int expected_values_count = table->num_fields;
+            // Le nombre de champs dans la table
+            int expected_values_count = table->num_fields;
 
-    // tableau pour styocker les valeurs après la découpe
-    char* values_array[expected_values_count];
-    int index = 0;
+            // tableau pour styocker les valeurs après la découpe
+            char* values_array[expected_values_count];
+            int index = 0;
 
-    //strtok pour découper les valeurs
-    char* token = strtok(values, ",");
-    while (token != NULL) {
-        while (*token == ' ') token++;  // Retirer les espaces autour de chaque valeur
-        values_array[index] = strdup(token);
-        index++;
-        token = strtok(NULL, ",");
-    }
-    printf("%d, %d\n", index, expected_values_count); 
+            //strtok pour découper les valeurs
+            char* token = strtok(values, ",");
+            while (token != NULL) {
+                while (*token == ' ') token++;  // Retirer les espaces autour de chaque valeur
+                values_array[index] = strdup(token);
+                index++;
+                token = strtok(NULL, ",");
+            }
+            printf("%d, %d\n", index, expected_values_count); 
 
-    // Vérification du nombre de valeurs saisies
-    if (index != expected_values_count) {
-        printf("Erreur : le nombre de valeurs ne correspond pas aux champs de la table.\n");
-        
-        // Libérer la mémoire allouée
-        for (int i = 0; i < index; i++) {
-            free(values_array[i]);
+            // Vérification du nombre de valeurs saisies
+            if (index != expected_values_count) {
+                printf("Erreur : le nombre de valeurs ne correspond pas aux champs de la table.\n");
+                
+                // Libérer la mémoire allouée
+                for (int i = 0; i < index; i++) {
+                    free(values_array[i]);
+                }
+                
+                return;
+            }
+
+            if (insert_record(table, values_array, expected_values_count) == 0) {
+                printf("Insertion réussie dans la table '%s'.\n", table_name);
+                save_record_to_file(table, values_array, expected_values_count);
+            }
+            for (int i = 0; i < expected_values_count; i++) {
+                free(values_array[i]);
+            }
+
+            break;
         }
-        
-        return;
-    }
-
-    if (insert_record(table, values_array, expected_values_count) == 0) {
-        printf("Insertion réussie dans la table '%s'.\n", table_name);
-        save_record_to_file(table, values_array, expected_values_count);
-    }
-    for (int i = 0; i < expected_values_count; i++) {
-        free(values_array[i]);
-    }
-
-    break;
-   }
 
         case (STATEMENT_SHOW_TABLES):{
             printf("Liste des tables dans la base de donnees :\n");
@@ -223,7 +241,7 @@ void execute_statement(Statement* statement) {
         break;
     }
 
-        case (STATEMENT_SELECT_WHERE): {
+    case (STATEMENT_SELECT_WHERE): {
     
             char table_name[100], field_name[100], value[100];
             int matched = sscanf(input_buffer->buffer, "SELECT * FROM %99s WHERE %99s = %99s", table_name, field_name, value);
@@ -238,10 +256,46 @@ void execute_statement(Statement* statement) {
                 printf("Erreur : la table '%s' n'existe pas.\n", table_name);
                 return;
             }
-            
+
             select_from_table_where(table, field_name, value);
             break;
+       }
+
+        // supprimer tous les enregistrements
+            case (STATEMENT_DELETE_ALL): {
+            char table_name[100];
+            
+            int matched = sscanf(input_buffer->buffer, "DELETE FROM %99s", table_name);
+            if (matched != 1) {
+                printf("Erreur de syntaxe dans la commande DELETE.\n");
+                return;
+            }
+
+            Table* table = search_btree(btree, table_name);
+            if (table == NULL) {
+                printf("Erreur : la table '%s' n'existe pas.\n", table_name);
+                return;
+            }
+
+            delete_all_records(table);
+            break;
         }
+
+        //supprimer la table dans la bdd
+        case (STATEMENT_DROP_TABLE): {
+            char table_name[100];
+            
+            int matched = sscanf(input_buffer->buffer, "DROP TABLE %99s", table_name);
+            if (matched != 1) {
+                printf("Erreur de syntaxe dans la commande DROP TABLE.\n");
+                return;
+            }
+
+            delete_table(btree, table_name);
+            break;
+       }
+    
+
         default:
             printf("Commande non reconnue.\n");
             break;

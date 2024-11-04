@@ -32,7 +32,7 @@ void add_field(Table* table, const char* field_name, const char* field_type) {
 
 void print_table(Table* table) {
     printf("+--------------------------------+\n");
-    printf("|         Table: %s         |\n", table->table_name);
+    printf("|         Table: %s              |\n", table->table_name);
     printf("+--------------------------------+\n");
 
     printf("| %-15s | %-12s |\n", "Field Name", "Field Type");
@@ -204,12 +204,26 @@ void select_from_table_where(Table* table, const char* field_name, const char* v
     if (!match_found) {
         printf("Aucun enregistrement trouvé pour %s = %s.\n", field_name, value);
     }
-    
+
     printf("+");
     for (int i = 0; i < table->num_fields; i++) {
         printf("---------------+");
     }
     printf("\n");
+}
+
+void delete_all_records(Table* table) {
+    // Libérer la mémoire de chaque enregistrement
+    for (int i = 0; i < table->num_records; i++) {
+        for (int j = 0; j < table->num_fields; j++) {
+            free(table->records[i].values[j]);
+        }
+        free(table->records[i].values);
+    }
+
+    // Réinitialiser le nombre d'enregistrements a zéro
+    table->num_records = 0;
+    printf("Tous les enregistrements de la table '%s' ont été supprimés.\n", table->table_name);
 }
 
 
