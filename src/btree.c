@@ -173,6 +173,15 @@ void delete_table(BTree* tree, const char* table_name) {
 
             found = 1;
             printf("Table '%s' supprimée avec succès\n", table_name);
+            
+            //supprimer le fichier de sauvegarde de la table
+            char filepath[256];
+            snprintf(filepath, sizeof(filepath), "sauvegarde/%s.txt", table_name);
+            if (unlink(filepath) == 0) {
+                printf("Fichier de sauvegarde '%s' supprimé avec succès.\n", filepath);
+            } else {
+                printf("Erreur : Impossible de supprimer le fichier de sauvegarde '%s'.\n", filepath);
+            }
 
             // Si le nœud n'a pas d'enfants, on pourrait le retirer du B-tree
             if (node->num_children == 0 && parent != NULL) {
