@@ -1,6 +1,0 @@
-TABLE: USERS
-FIELDS: id, name, age
-TABLE: LIVRES
-FIELDS: id, titre, price
-1229016416, 'MALIKA', 30)
-1229016417, 'MALIKA', 30, FGF)
