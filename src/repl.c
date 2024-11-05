@@ -134,24 +134,8 @@ void execute_statement(Statement* statement) {
             insert_btree(btree, table);
             printf("\n<---Table %s creee avec succes.--->\n", table->table_name);
             print_table(table);
-
-            // Écriture des informations de la table dans db.txt
-            FILE *fp = fopen("db.txt", "a");
-            if (fp == NULL) {
-                printf("Erreur d'ouverture du fichier db.txt.\n");
-                return;
-            }
-
-            // Écrire le nom de la table et les champs
-            fprintf(fp, "TABLE: %s\nFIELDS: ", table->table_name);
-            for (int i = 0; i < table->num_fields; i++) {
-                fprintf(fp, "%s", table->fields[i].field_name);
-                if (i != table->num_fields - 1) {
-                    fprintf(fp, ", ");
-                }
-            }
-            fprintf(fp, "\n");
-            fclose(fp);
+            
+            create_backup_file(table_name);
             break;
         }
 

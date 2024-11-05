@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 Table* create_table(const char* table_name) {
     Table* table = (Table*)calloc(1, sizeof(Table)); //calloc pour initialiser à zéro
@@ -101,22 +103,26 @@ int insert_record(Table* table, char** values, int num_values) {
 
 
 void save_record_to_file(Table* table, char** values, int num_values) {
+
+    //chemin du fichier (sauvegarde/nom_table.txt)
+    char filepath[256];
+    snprintf(filepath, sizeof(filepath), "sauvegarde/%s.txt", table->table_name);
+
     // Ouvrir le fichier en mode ajout
-    FILE *file = fopen("db.txt", "a");
+    FILE *file = fopen(filepath, "a");
     if (file == NULL) {
-        printf("Erreur d'ouverture du fichier pour la sauvegarde.\n");
+        printf("Erreur d'ouverture du fichier pour la sauvegarde de la table '%s'.\n", table->table_name);
         return;
     }
 
-    // Ajouter un enregistrement pour la table spécifiée
-    fprintf(file, "----------%d---------\n", table->num_records);
+    // ajouter les données insérées
+    fprintf(file, "---------- Enregistrement %d ---------\n", table->num_records);
     for (int i = 0; i < num_values; i++) {
         fprintf(file, "%s: %s\n", table->fields[i].field_name, values[i]);
     }
-    fprintf(file, "---------------------\n");
 
     fclose(file);
-    printf("Enregistrement sauvegarde dans la table '%s'.\n", table->table_name);
+    printf("Enregistrement sauvegardé dans la table '%s'.\n", table->table_name);
 }
 
 
@@ -225,6 +231,32 @@ void delete_all_records(Table* table) {
     table->num_records = 0;
     printf("Tous les enregistrements de la table '%s' ont été supprimés.\n", table->table_name);
 }
+
+
+void create_backup_file(const char* table_name) {
+    //s'assurer que le dossier 'sauvegarde' existe
+    struct stat st = {0};
+    if (stat("sauvegarde", &st) == -1) {
+        mkdir("sauvegarde", 0700); 
+    }
+
+    char filepath[256];
+    snprintf(filepath, sizeof(filepath), "sauvegarde/%s.txt", table_name);
+
+    // Créer le fichier pour la table
+    FILE *file = fopen(filepath, "w");
+    if (file == NULL) {
+        printf("Erreur lors de la création du fichier de sauvegarde pour la table '%s'.\n", table_name);
+        return;
+    }
+
+    fprintf(file, "TABLE: %s\n", table_name);
+    fprintf(file, "-----------------\n");
+
+    fclose(file);
+    printf("Fichier de sauvegarde pour la table '%s' créé avec succès.\n", table_name);
+}
+
 
 
 
