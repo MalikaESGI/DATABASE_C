@@ -1,6 +1,7 @@
 #include "btree.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 BTree* create_btree(int t) {
     BTree* tree = (BTree*)malloc(sizeof(BTree));
@@ -12,43 +13,63 @@ BTree* create_btree(int t) {
 
 void insert_btree(BTree* tree, Table* table) {
     if (tree->root == NULL) {
-        // Si l'arbre est vide, on crée le premier nœud avec une seule table
+        // Si l'arbre est vide, créer le premier nœud avec la table
         BTreeNode* node = (BTreeNode*)malloc(sizeof(BTreeNode));
-        node->table = table;  // Associe la table au nœud
-        node->children = NULL;  // Pas encore d'enfants
+        node->table = table;
+        node->children = NULL;
         node->num_children = 0;
-        node->is_leaf = 1;  // C'est une feuille car il n'a pas encore d'enfants
+        node->is_leaf = 1;
         tree->root = node;
     } else {
         BTreeNode* node = tree->root;
 
-        // Vérifier si le nœud actuel est une feuille
+        // Si le nœud est une feuille
         if (node->is_leaf) {
-            if (node->num_children == 0) {
-                // Si c'est une feuille sans enfants, on ajoute le premier enfant
-                node->children = (BTreeNode**)malloc(sizeof(BTreeNode*) * (2 * tree->t));  // Allouer des enfants
-                BTreeNode* new_node = (BTreeNode*)malloc(sizeof(BTreeNode));
-                new_node->table = table;
-                new_node->children = NULL;
-                new_node->num_children = 0;
-                new_node->is_leaf = 1;
-
-                node->children[0] = new_node;  // Ajouter un nouvel enfant
-                node->num_children = 1;
-                node->is_leaf = 0;  // Le nœud n'est plus une feuille
-            } else {
-                // Si le nœud a déjà des enfants, on ajoute le nouveau table dans un enfant
-                BTreeNode* new_node = (BTreeNode*)malloc(sizeof(BTreeNode));
-                new_node->table = table;
-                new_node->children = NULL;
-                new_node->num_children = 0;
-                new_node->is_leaf = 1;
-
-                node->children[node->num_children] = new_node;  // Ajouter le nouvel enfant
-                node->num_children += 1;
+            // Allouer de l'espace pour les enfants si ce n'est pas fait
+            if (node->children == NULL) {
+                node->children = (BTreeNode**)malloc(sizeof(BTreeNode*) * (2 * tree->t));
+                for (int i = 0; i < 2 * tree->t; i++) {
+                    node->children[i] = NULL;
+                }
             }
+
+            // Trouver un emplacement vide dans les enfants
+            int child_index = -1;
+            for (int i = 0; i < node->num_children; i++) {
+                if (node->children[i] == NULL) {
+                    child_index = i;
+                    break;
+                }
+            }
+
+            // Si aucun emplacement vide, on en crée un nouveau
+            if (child_index == -1) {
+                child_index = node->num_children;
+                node->num_children++;
+            }
+
+            // Ajouter la table dans un nouvel emplacement
+            BTreeNode* new_node = (BTreeNode*)malloc(sizeof(BTreeNode));
+            new_node->table = table;
+            new_node->children = NULL;
+            new_node->num_children = 0;
+            new_node->is_leaf = 1;
+
+            node->children[child_index] = new_node;
+            node->is_leaf = 0;  // Le nœud n'est plus une feuille car il a des enfants
         } else {
-            printf("Erreur: le nœud n'est pas une feuille\n");
+            // Si le nœud n'est pas une feuille, insérer dans un enfant existant
+            for (int i = 0; i < node->num_children; i++) {
+                if (node->children[i] == NULL) {
+                    node->children[i] = (BTreeNode*)malloc(sizeof(BTreeNode));
+                    node->children[i]->table = table;
+                    node->children[i]->children = NULL;
+                    node->children[i]->num_children = 0;
+                    node->children[i]->is_leaf = 1;
+                    return;
+                }
+            }
+            printf("Erreur: Aucun emplacement disponible pour ajouter la table.\n");
         }
     }
 }
@@ -96,16 +117,12 @@ void show_tables(BTreeNode* node) {
         printf("Aucune table n'existe dans la base de données.\n");
         return;
     }
-
-    // Bordure supérieure - n'imprimer qu'une seule fois
     printf("-----------------\n");
     printf("|    DB         |\n");
     printf("-----------------\n");
 
-    // Fonction récursive pour parcourir les nœuds
     show_tables_recursive(node);
 
-    // Bordure inférieure - n'imprimer qu'une seule fois
     printf("-----------------\n");
 }
 
@@ -136,11 +153,11 @@ Table* search_btree(BTree* tree, const char* table_name) {
                     return child_node->table;  // Table trouvée dans l'un des enfants
                 }
             }
-            return NULL;  // Table non trouvée dans les enfants
+            return NULL;  //table non trouvée
         }
     }
 
-    return NULL;  // Table non trouvée
+    return NULL; 
 }
 
 void delete_table(BTree* tree, const char* table_name) {
@@ -153,50 +170,49 @@ void delete_table(BTree* tree, const char* table_name) {
     BTreeNode* parent = NULL;
     int found = 0;
 
-    // Parcourir le B-tree pour trouver le nœud de la table à supprimer
+    // Rechercher et supprimer la table dans le nœud courant
     while (node != NULL) {
         if (node->table != NULL && strcmp(node->table->table_name, table_name) == 0) {
-            
             delete_all_records(node->table); // Supprimer tous les enregistrements de la table
 
-            // Libérer la mémoire pour les champs de la table
+            // Libérer la mémoire des champs de la table
             for (int i = 0; i < node->table->num_fields; i++) {
                 free(node->table->fields[i].field_name);
                 free(node->table->fields[i].field_type);
             }
             free(node->table->fields);
-
-            // Libérer le nom de la table et la structure elle-même
             free(node->table->table_name);
             free(node->table);
-            node->table = NULL;  // Retirer la référence de la table dans le B-tree
 
+            node->table = NULL;
             found = 1;
             printf("Table '%s' supprimée avec succès\n", table_name);
-            
-            //supprimer le fichier de sauvegarde de la table
+
+            // Supprimer le fichier de sauvegarde de la table
             char filepath[256];
             snprintf(filepath, sizeof(filepath), "sauvegarde/%s.txt", table_name);
-            if (unlink(filepath) == 0) {
-                printf("Fichier de sauvegarde '%s' supprimé avec succès.\n", filepath);
-            } else {
-                printf("Erreur : Impossible de supprimer le fichier de sauvegarde '%s'.\n", filepath);
-            }
 
-            // Si le nœud n'a pas d'enfants, on pourrait le retirer du B-tree
-            if (node->num_children == 0 && parent != NULL) {
-                for (int i = 0; i < parent->num_children; i++) {
-                    if (parent->children[i] == node) {
-                        free(parent->children[i]);
-                        parent->children[i] = NULL;
-                        break;
+
+            // retirer si le nœud est vide et sans enfants
+            if (node->num_children == 0) {
+                if (parent == NULL) {
+                    // Si le nœud est la racine et vide, supprimer l'arbre
+                    free(node);
+                    tree->root = NULL;
+                } else {
+                    for (int i = 0; i < parent->num_children; i++) {
+                        if (parent->children[i] == node) {
+                            free(parent->children[i]);
+                            parent->children[i] = NULL;
+                            break;
+                        }
                     }
                 }
             }
             break;
         }
 
-        // Parcours des enfants
+        // Si la table n'a pas été trouvée, parcourir les enfants
         int child_found = 0;
         for (int i = 0; i < node->num_children; i++) {
             if (node->children[i] != NULL) {
@@ -215,4 +231,3 @@ void delete_table(BTree* tree, const char* table_name) {
         printf("Table '%s' non trouvée dans la base de données\n", table_name);
     }
 }
-

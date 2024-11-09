@@ -34,7 +34,7 @@ void add_field(Table* table, const char* field_name, const char* field_type) {
 
 void print_table(Table* table) {
     printf("+--------------------------------+\n");
-    printf("|         Table: %s              |\n", table->table_name);
+    printf("|         Table: %s           |\n", table->table_name);
     printf("+--------------------------------+\n");
 
     printf("| %-15s | %-12s |\n", "Field Name", "Field Type");
@@ -227,8 +227,20 @@ void delete_all_records(Table* table) {
         free(table->records[i].values);
     }
 
-    // Réinitialiser le nombre d'enregistrements a zéro
+    // Réinitialiser a zéro
     table->num_records = 0;
+
+    // Vider le contenu du fichier de sauvegarde de la table indiqué lors du delete
+    char filepath[256];
+    snprintf(filepath, sizeof(filepath), "sauvegarde/%s.txt", table->table_name);
+    FILE *file = fopen(filepath, "w");
+    if (file != NULL) {
+        fclose(file);
+        printf("Contenu du fichier '%s' effacé.\n", filepath);
+    } else {
+        printf("Erreur : Impossible d'effacer le contenu du fichier '%s'.\n", filepath);
+    }
+
     printf("Tous les enregistrements de la table '%s' ont été supprimés.\n", table->table_name);
 }
 
@@ -249,9 +261,6 @@ void create_backup_file(const char* table_name) {
         printf("Erreur lors de la création du fichier de sauvegarde pour la table '%s'.\n", table_name);
         return;
     }
-
-    fprintf(file, "TABLE: %s\n", table_name);
-    fprintf(file, "-----------------\n");
 
     fclose(file);
     printf("Fichier de sauvegarde pour la table '%s' créé avec succès.\n", table_name);
