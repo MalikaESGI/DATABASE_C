@@ -245,8 +245,8 @@ void delete_all_records(Table* table) {
 }
 
 
-void create_backup_file(const char* table_name) {
-    //s'assurer que le dossier 'sauvegarde' existe
+void create_backup_file(const char* table_name, Table* table) {
+    // vérifier si le dossier de sauvegarde existe 
     struct stat st = {0};
     if (stat("sauvegarde", &st) == -1) {
         mkdir("sauvegarde", 0700); 
@@ -261,6 +261,17 @@ void create_backup_file(const char* table_name) {
         printf("Erreur lors de la création du fichier de sauvegarde pour la table '%s'.\n", table_name);
         return;
     }
+
+    // Ecrire le nom de la table et les champs avec leurs types
+    fprintf(file, "TABLE: %s\n", table_name);
+    fprintf(file, "FIELDS: ");
+    for (int i = 0; i < table->num_fields; i++) {
+        fprintf(file, "%s %s", table->fields[i].field_name, table->fields[i].field_type);
+        if (i != table->num_fields - 1) {
+            fprintf(file, ", ");
+        }
+    }
+    fprintf(file, "\n");
 
     fclose(file);
     printf("Fichier de sauvegarde pour la table '%s' créé avec succès.\n", table_name);
