@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
+#include <stdbool.h>
 
 BTree* create_btree(int t) {
     BTree* tree = (BTree*)malloc(sizeof(BTree));
@@ -191,7 +193,11 @@ void delete_table(BTree* tree, const char* table_name) {
             // Supprimer le fichier de sauvegarde de la table
             char filepath[256];
             snprintf(filepath, sizeof(filepath), "sauvegarde/%s.txt", table_name);
-
+             if (unlink(filepath) == 0) {
+                printf("Fichier de sauvegarde '%s' supprimé avec succès.\n", filepath);
+            } else {
+                printf("Erreur : Impossible de supprimer le fichier de sauvegarde '%s'.\n", filepath);
+            }
 
             // retirer si le nœud est vide et sans enfants
             if (node->num_children == 0) {
@@ -231,3 +237,74 @@ void delete_table(BTree* tree, const char* table_name) {
         printf("Table '%s' non trouvée dans la base de données\n", table_name);
     }
 }
+
+
+
+// charger les tables à partir des fichiers dans le dossier sauvegarde
+void sauvegarde(BTree* tree) {
+    DIR *dir;
+    struct dirent *ent;
+
+    if ((dir = opendir("sauvegarde")) != NULL) {
+        // Parcourir tous les fichiers dans le dossier "sauvegarde"
+        while ((ent = readdir(dir)) != NULL) {
+            if (strstr(ent->d_name, ".txt") != NULL) {
+                // Récupérer le nom de la table depuis le nom du fichier
+                char table_name[100];
+                sscanf(ent->d_name, "%[^.]", table_name);
+
+                // Ouvrir le fichier de la table
+                char filepath[256];
+                snprintf(filepath, sizeof(filepath), "sauvegarde/%s", ent->d_name);
+                FILE *file = fopen(filepath, "r");
+                if (file == NULL) {
+                    printf("Erreur d'ouverture du fichier %s.\n", filepath);
+                    continue;
+                }
+
+                // Créer une nouvelle table avec le nom extrait
+                Table* table = create_table(table_name);
+
+                char line[256];
+                bool reading_fields = true;
+
+                // Lire la structure et les enregistrements de la table
+                while (fgets(line, sizeof(line), file)) {
+                    if (strncmp(line, "FIELDS:", 7) == 0 && reading_fields) {
+                        // Lire et ajouter les champs à la table
+                        reading_fields = false;
+
+                        char field_name[100], field_type[100];
+                        char *field = strtok(line + 7, ",");  // Passer après "FIELDS: "
+                        while (field != NULL) {
+                            sscanf(field, "%s %s", field_name, field_type);
+                            add_field(table, field_name, field_type);
+                            field = strtok(NULL, ",");
+                        }
+                    } else if (strncmp(line, "---------- Enregistrement", 25) == 0) {
+                        // Lire un enregistrement
+                        char* values[table->num_fields];
+                        for (int i = 0; i < table->num_fields; i++) {
+                            if (fgets(line, sizeof(line), file) == NULL) break;
+
+                            // Extraire la valeur après le ':' et enlever les espaces
+                            char *value_start = strchr(line, ':') + 2;
+                            values[i] = strdup(value_start);
+
+                            // Enlever le retour à la ligne en fin de valeur
+                            values[i][strcspn(values[i], "\n")] = '\0';
+                        }
+                        insert_record(table, values, table->num_fields);
+                    }
+                }
+                // Ajouter la table dans le B-tree
+                insert_btree(tree, table);
+                fclose(file);
+            }
+        }
+        closedir(dir);
+    } else {
+        printf("Erreur : dossier sauvegarde introuvable.\n");
+    }
+}
+

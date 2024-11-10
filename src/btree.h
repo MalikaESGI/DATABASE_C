@@ -22,5 +22,6 @@ void insert_btree(BTree* tree, Table* table);
 int table_exists(BTree* tree, const char* table_name);
 void show_tables(BTreeNode* node);
 Table* search_btree(BTree* tree, const char* table_name);
+void sauvegarde(BTree* tree);
 
 #endif

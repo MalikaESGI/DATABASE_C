@@ -135,7 +135,7 @@ void execute_statement(Statement* statement) {
             printf("\n<---Table %s creee avec succes.--->\n", table->table_name);
             print_table(table);
             
-            create_backup_file(table_name);
+            create_backup_file(table_name, table);
             break;
         }
 
@@ -286,9 +286,9 @@ void execute_statement(Statement* statement) {
     }
 }
 
-void repl(void) {
+void repl(BTree* tree) {
     input_buffer = new_input_buffer();
-    btree = create_btree(3);  // Initialise le B-tree avec un ordre de 3
+    btree = tree;
 
     while (true) {
         print_prompt();
