@@ -26,7 +26,8 @@ typedef enum {
     STATEMENT_SELECT_WHERE,
     STATEMENT_DELETE_BY_ID,
     STATEMENT_DELETE_ALL,
-    STATEMENT_DROP_TABLE   
+    STATEMENT_DROP_TABLE,
+    STATEMENT_UPDATE 
     
  } StatementType;
 
@@ -88,6 +89,11 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
         statement->type = STATEMENT_DROP_TABLE;
         return PREPARE_SUCCESS;
     }
+
+    if (strncmp(input_buffer->buffer, "UPDATE", 6) == 0) {
+    statement->type = STATEMENT_UPDATE;
+    return PREPARE_SUCCESS;
+    }
     return PREPARE_UNRECOGNIZED_STATEMENT;
 }
 
@@ -98,41 +104,41 @@ void execute_statement(Statement* statement) {
             int matched = sscanf(input_buffer->buffer, "CREATE TABLE %99s", table_name);
 
             if (matched != 1) {
-                printf("Erreur : nom de la table non valide.\n");
+                printf("Error : Invalid table name.\n");
                 return;
             }
 
             // Vérifier si la table existe déjà dans le B-tree
             if (table_exists(btree, table_name)) {
-                printf("Erreur : la table '%s' existe deja.\n", table_name);
+                printf("Error : The table '%s' already exists.\n", table_name);
                 return;
             }
 
             // Si la table n'existe pas, crée la nouvelle table
             Table* table = create_table(table_name);
             add_field(table, "id", "int(AUTO)");
-            printf("Table '%s' creee. Merci d'indiquer les champs.\n", table->table_name);
+            printf("Table '%s' created successfully. Please specify the fields.\n", table->table_name);
 
             char field_name[100];
             char field_type[100];
 
             // Saisie des champs
             while (true) {
-                printf("%s > Nom du champ (ou 'q' pour terminer) : ", table->table_name);
+                printf("%s > Field name (or 'q' to finish) : ", table->table_name);
                 scanf("%s", field_name);
 
                 if (strcmp(field_name, "q") == 0) {
                     break;
                 }
 
-                printf("%s > Type du champ : ", table->table_name);
+                printf("%s > Field type : ", table->table_name);
                 scanf("%s", field_type);
 
                 add_field(table, field_name, field_type);
             }
 
             insert_btree(btree, table);
-            printf("\n<---Table %s creee avec succes.--->\n", table->table_name);
+            printf("\n<---Table %s created successfully--->\n", table->table_name);
             print_table(table);
             
             create_backup_file(table_name, table);
@@ -146,39 +152,39 @@ void execute_statement(Statement* statement) {
             int matched = sscanf(input_buffer->buffer, "INSERT INTO %99s VALUES (%99[^\n])", table_name, values);
 
             if (matched != 2) {
-                printf("Erreur de syntaxe dans la commande INSERT.\n");
+                printf("Error : Syntax error in the INSERT command.\n");
                 return;
             }
 
             // Rechercher la table dans le B-tree
             Table* table = search_btree(btree, table_name);
             if (table == NULL) {
-                printf("Erreur : la table '%s' n'existe pas.\n", table_name);
+                printf("Error : The table '%s' does not exist.\n", table_name);
                 return;
             }
 
             // Le nombre de champs dans la table
             int expected_values_count = table->num_fields;
 
-            // tableau pour styocker les valeurs après la découpe
+            // tableau pour stocker les valeurs après la découpe
             char* values_array[expected_values_count];
             int index = 0;
 
             //strtok pour découper les valeurs
             char* token = strtok(values, ",");
             while (token != NULL) {
-                while (*token == ' ') token++;  // Retirer les espaces autour de chaque valeur
+                while (*token == ' ') token++;  //Retirer les espaces des valeurs sasies
                 values_array[index] = strdup(token);
                 index++;
                 token = strtok(NULL, ",");
             }
-            printf("%d, %d\n", index, expected_values_count); 
+            // printf("%d, %d\n", index, expected_values_count); 
 
-            // Vérification du nombre de valeurs saisies
+            // Vérifier du nombre de valeurs saisies
             if (index != expected_values_count) {
-                printf("Erreur : le nombre de valeurs ne correspond pas aux champs de la table.\n");
+                printf("Error : The number of values does not match the table's fields.\n");
                 
-                // Libérer la mémoire allouée
+                // Libérer la mémoire
                 for (int i = 0; i < index; i++) {
                     free(values_array[i]);
                 }
@@ -187,7 +193,7 @@ void execute_statement(Statement* statement) {
             }
 
             if (insert_record(table, values_array, expected_values_count) == 0) {
-                printf("Insertion réussie dans la table '%s'.\n", table_name);
+                printf("Successful insertion into the table '%s'.\n", table_name);
                 save_record_to_file(table, values_array, expected_values_count);
             }
             for (int i = 0; i < expected_values_count; i++) {
@@ -198,7 +204,7 @@ void execute_statement(Statement* statement) {
         }
 
         case (STATEMENT_SHOW_TABLES):{
-            printf("Liste des tables dans la base de donnees :\n");
+            printf("\n<--List of tables in the database--->\n");
             show_tables(btree->root);  
             break;
         }
@@ -209,14 +215,13 @@ void execute_statement(Statement* statement) {
         int matched = sscanf(input_buffer->buffer, "SELECT * FROM %99s", table_name);
 
         if (matched != 1) {
-            printf("Erreur de syntaxe dans la commande SELECT.\n");
+            printf("Error : Syntax error in the SELECT command.\n");
             return;
         }
 
-        // Rechercher la table dans le B-tree
         Table* table = search_btree(btree, table_name);
         if (table == NULL) {
-            printf("Erreur : la table '%s' n'existe pas.\n", table_name);
+            printf("The table '%s' does not exist.\n", table_name);
             return;
         }
 
@@ -228,16 +233,16 @@ void execute_statement(Statement* statement) {
     case (STATEMENT_SELECT_WHERE): {
     
             char table_name[100], field_name[100], value[100];
-            int matched = sscanf(input_buffer->buffer, "SELECT * FROM %99s WHERE %99s = %99s", table_name, field_name, value);
+            int matched = sscanf(input_buffer->buffer, "SELECT * FROM %99s WHERE %99s=%99s", table_name, field_name, value);
 
             if (matched != 3) {
-                printf("Erreur de syntaxe dans la commande SELECT avec WHERE.\n");
+                printf("Error : Syntax error in the SELECT command with WHERE.\n");
                 return;
             }
 
             Table* table = search_btree(btree, table_name);
             if (table == NULL) {
-                printf("Erreur : la table '%s' n'existe pas.\n", table_name);
+                printf("The table '%s' does not exist.\n", table_name);
                 return;
             }
 
@@ -251,13 +256,13 @@ void execute_statement(Statement* statement) {
             
             int matched = sscanf(input_buffer->buffer, "DELETE FROM %99s", table_name);
             if (matched != 1) {
-                printf("Erreur de syntaxe dans la commande DELETE.\n");
+                printf("Error : Syntax error in the DELETE (FROM TABLE) command.\n");
                 return;
             }
 
             Table* table = search_btree(btree, table_name);
             if (table == NULL) {
-                printf("Erreur : la table '%s' n'existe pas.\n", table_name);
+                printf("The table '%s' does not exist.\n", table_name);
                 return;
             }
 
@@ -271,17 +276,39 @@ void execute_statement(Statement* statement) {
             
             int matched = sscanf(input_buffer->buffer, "DROP TABLE %99s", table_name);
             if (matched != 1) {
-                printf("Erreur de syntaxe dans la commande DROP TABLE.\n");
+                printf("Error : Syntax error in the DROP TABLE command.\n");
                 return;
             }
 
             delete_table(btree, table_name);
             break;
        }
+
+        case (STATEMENT_UPDATE): {
+            char table_name[100], field_to_update[100], new_value[100], where_field[100], where_value[100];
+            
+            int matched = sscanf(input_buffer->buffer, "UPDATE %99s SET %99[^=]=%99[^ ] WHERE %99[^=]=%99s",
+                                table_name, field_to_update, new_value, where_field, where_value);
+
+            if (matched != 5) {
+                printf("Error : Syntax error in the UPDATE command.\n");
+                return;
+            }
+
+            Table* table = search_btree(btree, table_name);
+            if (table == NULL) {
+                printf("The table '%s' does not exist.\n", table_name);
+                return;
+            }
+
+            update_records(table, field_to_update, new_value, where_field, where_value);
+            break;
+        }
+
     
 
         default:
-            printf("Commande non reconnue.\n");
+            printf("Unrecognized command.\n");
             break;
     }
 }
