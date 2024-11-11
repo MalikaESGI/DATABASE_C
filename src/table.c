@@ -9,7 +9,7 @@
 Table* create_table(const char* table_name) {
     Table* table = (Table*)calloc(1, sizeof(Table)); //calloc pour initialiser à zéro
     if (table == NULL) {
-        printf("Erreur d'allocation mémoire pour la table.\n");
+        printf("Error: Memory allocation error for the table.\n");
         return NULL;
     }
     table->table_name = strdup(table_name);
@@ -24,7 +24,7 @@ void add_field(Table* table, const char* field_name, const char* field_type) {
     table->num_fields++;
     table->fields = realloc(table->fields, table->num_fields * sizeof(Field));
     if (table->fields == NULL) {
-        printf("Erreur d'allocation mémoire pour les champs.\n");
+        printf("Error: Memory allocation error for the fields");
         return;
     }
     table->fields[table->num_fields - 1].field_name = strdup(field_name);
@@ -50,13 +50,13 @@ void print_table(Table* table) {
 int insert_record(Table* table, char** values, int num_values) {
     // Vérifie que le nombre de valeurs correspond au nombre de champs
     if (num_values != table->num_fields) {
-        printf("Erreur : le nombre de valeurs ne correspond pas aux champs de la table.\n");
+        printf("Error: The number of values does not match the table fields.\n");
         return -1;
     }
 
     for (int i = 0; i < table->num_records; i++) {
         if (strcmp(table->records[i].values[0], values[0]) == 0) {  // l'ID est la première valeur
-            printf("Erreur : L'ID %s existe déjà dans la table.\n", values[0]);
+            printf("Error: The ID %s already exists in the table.\n", values[0]);
             return -1;
         }
     }
@@ -65,14 +65,14 @@ int insert_record(Table* table, char** values, int num_values) {
     if (table->records == NULL) {
         table->records = calloc(1, sizeof(Record));
         if (table->records == NULL) {
-            printf("Erreur d'allocation mémoire pour les enregistrements.\n");
+            printf("Error : Memory allocation error for records.\n");
             return -1;
         }
     } else {
         // Redimensionner pour ajouter un nouvel enregistrement
         Record* temp_records = realloc(table->records, sizeof(Record) * (table->num_records + 1));
         if (temp_records == NULL) {
-            printf("Erreur d'allocation mémoire pour les enregistrements.\n");
+            printf("Error : Memory allocation error for records.\n");
             return -1;
         }
         table->records = temp_records;
@@ -85,7 +85,7 @@ int insert_record(Table* table, char** values, int num_values) {
     // Allouer la mémoire pour stocker toutes les valeurs
     new_record->values = calloc(num_values, sizeof(char*));
     if (new_record->values == NULL) {
-        printf("Erreur d'allocation mémoire pour les valeurs de l'enregistrement.\n");
+        printf("Error : Memory allocation error for record values.\n");
         return -1;
     }
 
@@ -93,7 +93,7 @@ int insert_record(Table* table, char** values, int num_values) {
     for (int i = 0; i < num_values; i++) {
         new_record->values[i] = strdup(values[i]);
         if (new_record->values[i] == NULL) {
-            printf("Erreur d'allocation mémoire pour la valeur du champ %d.\n", i);
+            printf("Error : Memory allocation error for the value of field %d.\n", i);
             return -1;
         }
     }
@@ -111,7 +111,7 @@ void save_record_to_file(Table* table, char** values, int num_values) {
     // Ouvrir le fichier en mode ajout
     FILE *file = fopen(filepath, "a");
     if (file == NULL) {
-        printf("Erreur d'ouverture du fichier pour la sauvegarde de la table '%s'.\n", table->table_name);
+        printf("Error opening file for table backup '%s'.\n", table->table_name);
         return;
     }
 
@@ -120,15 +120,13 @@ void save_record_to_file(Table* table, char** values, int num_values) {
     for (int i = 0; i < num_values; i++) {
         fprintf(file, "%s: %s\n", table->fields[i].field_name, values[i]);
     }
-
     fclose(file);
-    printf("Enregistrement sauvegardé dans la table '%s'.\n", table->table_name);
 }
 
 
 void select_from_table(Table* table) {
     if (table->num_records == 0) {
-        printf("Aucun enregistrement dans la table '%s'.\n", table->table_name);
+        printf("No records in the table '%s'.\n", table->table_name);
         return;
     }
 
@@ -175,7 +173,7 @@ void select_from_table_where(Table* table, const char* field_name, const char* v
     }
 
     if (field_index == -1) {
-        printf("Erreur : Champ '%s' non trouvé dans la table '%s'.\n", field_name, table->table_name);
+        printf("Error : Field '%s' not found in the table '%s'.\n", field_name, table->table_name);
         return;
     }
 
@@ -208,7 +206,7 @@ void select_from_table_where(Table* table, const char* field_name, const char* v
     }
 
     if (!match_found) {
-        printf("Aucun enregistrement trouvé pour %s = %s.\n", field_name, value);
+        printf("No records found for %s = %s.\n", field_name, value);
     }
 
     printf("+");
@@ -236,12 +234,12 @@ void delete_all_records(Table* table) {
     FILE *file = fopen(filepath, "w");
     if (file != NULL) {
         fclose(file);
-        printf("Contenu du fichier '%s' effacé.\n", filepath);
+
     } else {
-        printf("Erreur : Impossible d'effacer le contenu du fichier '%s'.\n", filepath);
+        printf("Error : Unable to clear the file content '%s'.\n", filepath);
     }
 
-    printf("Tous les enregistrements de la table '%s' ont été supprimés.\n", table->table_name);
+    printf("All records in the table '%s' have been deleted.\n", table->table_name);
 }
 
 
@@ -258,11 +256,10 @@ void create_backup_file(const char* table_name, Table* table) {
     // Créer le fichier pour la table
     FILE *file = fopen(filepath, "w");
     if (file == NULL) {
-        printf("Erreur lors de la création du fichier de sauvegarde pour la table '%s'.\n", table_name);
+        printf("Error creating backup file for the table '%s'.\n", table_name);
         return;
     }
 
-    // Ecrire le nom de la table et les champs avec leurs types
     fprintf(file, "TABLE: %s\n", table_name);
     fprintf(file, "FIELDS: ");
     for (int i = 0; i < table->num_fields; i++) {
@@ -272,12 +269,80 @@ void create_backup_file(const char* table_name, Table* table) {
         }
     }
     fprintf(file, "\n");
-
     fclose(file);
-    printf("Fichier de sauvegarde pour la table '%s' créé avec succès.\n", table_name);
+}
+
+void update_records(Table* table, const char* field_to_update, const char* new_value, const char* where_field, const char* where_value) {
+    int field_to_update_index = -1;
+    int where_field_index = -1;
+
+        for (int i = 0; i < table->num_fields; i++) {
+            if (strcasecmp(table->fields[i].field_name, field_to_update) == 0) {
+                field_to_update_index = i;
+            }
+            if (strcasecmp(table->fields[i].field_name, where_field) == 0) {
+                where_field_index = i;
+            }
+        }
+
+    // Vérifi si leers champs existent
+    if (field_to_update_index == -1) {
+        printf("Error : The field '%s' to update was not found in the table.\n", field_to_update);
+        return;
+    }
+    if (where_field_index == -1) {
+        printf("Error : The condition field '%s' was not found in the table.\n", where_field);
+        return;
+    }
+
+    // Parcourir les enregistrements pour effectuer la mise à jour
+    int updated_count = 0;
+    for (int i = 0; i < table->num_records; i++) {
+        if (strcmp(table->records[i].values[where_field_index], where_value) == 0) {
+            free(table->records[i].values[field_to_update_index]);
+            table->records[i].values[field_to_update_index] = strdup(new_value);
+            updated_count++;
+        }
+    }
+
+    if (updated_count == 0) {
+        printf("No records updated.\n");
+    } else {
+        printf("%d record(s) updated. \n", updated_count);
+        update_backup_file(table); 
+    }
 }
 
 
+void update_backup_file(Table* table) {
+    char filepath[256];
+    snprintf(filepath, sizeof(filepath), "sauvegarde/%s.txt", table->table_name);
+    
+    FILE* file = fopen(filepath, "w");
+    if (file == NULL) {
+        printf("Error :  unable to open the backup file for update\n");
+        return;
+    }
+
+    // Écrire le nom de la table et les champs
+    fprintf(file, "TABLE: %s\nFIELDS: ", table->table_name);
+    for (int i = 0; i < table->num_fields; i++) {
+        fprintf(file, "%s %s", table->fields[i].field_name, table->fields[i].field_type);
+        if (i < table->num_fields - 1) {
+            fprintf(file, ", ");
+        }
+    }
+    fprintf(file, "\n");
+
+    // Écrire les enregistrements mis à jour
+    for (int i = 0; i < table->num_records; i++) {
+        fprintf(file, "---------- Enregistrement %d ---------\n", i + 1);
+        for (int j = 0; j < table->num_fields; j++) {
+            fprintf(file, "%s: %s\n", table->fields[j].field_name, table->records[i].values[j]);
+        }
+    }
+    fclose(file);
+}
 
 
 
