@@ -27,7 +27,7 @@ void insert_btree(BTree* tree, Table* table) {
 
         // Si le nœud est une feuille
         if (node->is_leaf) {
-            // Allouer de l'espace pour les enfants si ce n'est pas fait
+            // Allouer de l'espace pour les enfants
             if (node->children == NULL) {
                 node->children = (BTreeNode**)malloc(sizeof(BTreeNode*) * (2 * tree->t));
                 for (int i = 0; i < 2 * tree->t; i++) {
@@ -71,7 +71,7 @@ void insert_btree(BTree* tree, Table* table) {
                     return;
                 }
             }
-            printf("Erreur: Aucun emplacement disponible pour ajouter la table.\n");
+            printf("Error: No space available to add the table.\n");
         }
     }
 }
@@ -85,7 +85,7 @@ int table_exists(BTree* tree, const char* table_name) {
     while (node != NULL) {
         // Vérifier la table dans ce nœud
         if (strcmp(node->table->table_name, table_name) == 0) {
-            return 1;  // La table a été trouvée
+            return 1; 
         }
 
         // Si ce nœud est une feuille, on arrête la recherche
@@ -97,11 +97,10 @@ int table_exists(BTree* tree, const char* table_name) {
         }
     }
 
-    return 0;  // La table n'a pas été trouvée
+    return 0;  // la table n'existe pas
 }
 
 void show_tables_recursive(BTreeNode* node) {
-    // Vérifier que le nœud et la table sont pas null
     if (node == NULL || node->table == NULL) {
         return;
     }
@@ -116,7 +115,7 @@ void show_tables_recursive(BTreeNode* node) {
 
 void show_tables(BTreeNode* node) {
     if (node == NULL) {
-        printf("Aucune table n'existe dans la base de données.\n");
+        printf("No table exists in the database.\n");
         return;
     }
     printf("-----------------\n");
@@ -145,10 +144,9 @@ Table* search_btree(BTree* tree, const char* table_name) {
 
         // Si c'est une feuille, on arrête ici
         if (current_node->is_leaf) {
-            return NULL;  // Si c'est une feuille et qu'on ne l'a pas trouvée, elle n'existe pas
+            return NULL;  // la table existe pas
         } else {
             // Sinon, on parcourt les enfants pour continuer la recherche
-            // Pour simplifier, on parcourt tous les enfants
             for (int i = 0; i < current_node->num_children; i++) {
                 BTreeNode* child_node = current_node->children[i];
                 if (child_node != NULL && strcmp(child_node->table->table_name, table_name) == 0) {
@@ -164,7 +162,7 @@ Table* search_btree(BTree* tree, const char* table_name) {
 
 void delete_table(BTree* tree, const char* table_name) {
     if (tree->root == NULL) {
-        printf("Erreur : La base de données est vide.\n");
+        printf("Error : The database is empty.\n");
         return;
     }
 
@@ -175,7 +173,8 @@ void delete_table(BTree* tree, const char* table_name) {
     // Rechercher et supprimer la table dans le nœud courant
     while (node != NULL) {
         if (node->table != NULL && strcmp(node->table->table_name, table_name) == 0) {
-            delete_all_records(node->table); // Supprimer tous les enregistrements de la table
+            // Supprimer tous les enregistrements de la table
+            delete_all_records(node->table);
 
             // Libérer la mémoire des champs de la table
             for (int i = 0; i < node->table->num_fields; i++) {
@@ -188,16 +187,15 @@ void delete_table(BTree* tree, const char* table_name) {
 
             node->table = NULL;
             found = 1;
-            printf("Table '%s' supprimée avec succès\n", table_name);
+            printf("Table '%s' deleted successfully\n", table_name);
 
             // Supprimer le fichier de sauvegarde de la table
             char filepath[256];
             snprintf(filepath, sizeof(filepath), "sauvegarde/%s.txt", table_name);
-             if (unlink(filepath) == 0) {
-                printf("Fichier de sauvegarde '%s' supprimé avec succès.\n", filepath);
-            } else {
-                printf("Erreur : Impossible de supprimer le fichier de sauvegarde '%s'.\n", filepath);
-            }
+
+                if (unlink(filepath) != 0) {
+                    printf("Error: Unable to delete the backup file '%s'.\n", filepath);
+                }
 
             // retirer si le nœud est vide et sans enfants
             if (node->num_children == 0) {
@@ -234,13 +232,13 @@ void delete_table(BTree* tree, const char* table_name) {
     }
 
     if (!found) {
-        printf("Table '%s' non trouvée dans la base de données\n", table_name);
+        printf("Table '%s' not found in the database\n", table_name);
     }
 }
 
 
 
-// charger les tables à partir des fichiers dans le dossier sauvegarde
+// charger les tables à partir des fichiers de sauvegadre
 void sauvegarde(BTree* tree) {
     DIR *dir;
     struct dirent *ent;
@@ -253,12 +251,11 @@ void sauvegarde(BTree* tree) {
                 char table_name[100];
                 sscanf(ent->d_name, "%[^.]", table_name);
 
-                // Ouvrir le fichier de la table
                 char filepath[256];
                 snprintf(filepath, sizeof(filepath), "sauvegarde/%s", ent->d_name);
                 FILE *file = fopen(filepath, "r");
                 if (file == NULL) {
-                    printf("Erreur d'ouverture du fichier %s.\n", filepath);
+                    printf("Error: unable to open the file: %s.\n", filepath);
                     continue;
                 }
 
@@ -271,7 +268,7 @@ void sauvegarde(BTree* tree) {
                 // Lire la structure et les enregistrements de la table
                 while (fgets(line, sizeof(line), file)) {
                     if (strncmp(line, "FIELDS:", 7) == 0 && reading_fields) {
-                        // Lire et ajouter les champs à la table
+                        // ajouter les champs à la table
                         reading_fields = false;
 
                         char field_name[100], field_type[100];
@@ -304,7 +301,7 @@ void sauvegarde(BTree* tree) {
         }
         closedir(dir);
     } else {
-        printf("Erreur : dossier sauvegarde introuvable.\n");
+        printf("Error: file not found.\n");
     }
 }
 
