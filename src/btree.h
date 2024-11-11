@@ -23,5 +23,11 @@ int table_exists(BTree* tree, const char* table_name);
 void show_tables(BTreeNode* node);
 Table* search_btree(BTree* tree, const char* table_name);
 void sauvegarde(BTree* tree);
+// Déclaration de la fonction search_btree_recursive
+Table* search_btree_recursive(BTreeNode* node, const char* table_name);
+
+// Déclaration de la fonction delete_table_recursive
+int delete_table_recursive(BTree* tree, BTreeNode* node, BTreeNode* parent, const char* table_name);
+
 
 #endif
