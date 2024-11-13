@@ -233,7 +233,7 @@ void execute_statement(Statement* statement) {
     case (STATEMENT_SELECT_WHERE): {
     
             char table_name[100], field_name[100], value[100];
-            int matched = sscanf(input_buffer->buffer, "SELECT * FROM %99s WHERE %99s=%99s", table_name, field_name, value);
+            int matched = sscanf(input_buffer->buffer, "SELECT * FROM %99s WHERE %99s = %99[^\n]", table_name, field_name, value);
 
             if (matched != 3) {
                 printf("Error : Syntax error in the SELECT command with WHERE.\n");

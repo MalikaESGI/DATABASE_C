@@ -104,18 +104,18 @@ int insert_record(Table* table, char** values, int num_values) {
 
 void save_record_to_file(Table* table, char** values, int num_values) {
 
-    //chemin du fichier (sauvegarde/nom_table.txt)
+    //chemin  /sauvegarde/nom_table.txt)
     char filepath[256];
     snprintf(filepath, sizeof(filepath), "sauvegarde/%s.txt", table->table_name);
 
-    // Ouvrir le fichier en mode ajout
+    //Ouvrir le fichier en mode ajout
     FILE *file = fopen(filepath, "a");
     if (file == NULL) {
         printf("Error opening file for table backup '%s'.\n", table->table_name);
         return;
     }
 
-    // ajouter les données insérées
+    //ajouter les données insérées
     fprintf(file, "---------- Enregistrement %d ---------\n", table->num_records);
     for (int i = 0; i < num_values; i++) {
         fprintf(file, "%s: %s\n", table->fields[i].field_name, values[i]);
@@ -324,7 +324,7 @@ void update_backup_file(Table* table) {
         return;
     }
 
-    // Écrire le nom de la table et les champs
+    // Nom de la table et champs
     fprintf(file, "TABLE: %s\nFIELDS: ", table->table_name);
     for (int i = 0; i < table->num_fields; i++) {
         fprintf(file, "%s %s", table->fields[i].field_name, table->fields[i].field_type);
@@ -334,7 +334,7 @@ void update_backup_file(Table* table) {
     }
     fprintf(file, "\n");
 
-    // Écrire les enregistrements mis à jour
+    // les enregistrements mis à jour
     for (int i = 0; i < table->num_records; i++) {
         fprintf(file, "---------- Enregistrement %d ---------\n", i + 1);
         for (int j = 0; j < table->num_fields; j++) {
