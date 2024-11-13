@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
 #include "repl.h"
-
+#include "table.h"
+#include "btree.h"
 
 int main(int argc, char* argv[], char* envp[]){
-  
-  repl();
-  return 0;
-  
+    BTree* tree = create_btree(3); 
+    sauvegarde(tree);
+    repl(tree); 
 }
