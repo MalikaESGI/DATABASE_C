@@ -54,41 +54,46 @@ void insert_btree(BTree* tree, Table* table) {
 
 
 int table_exists(BTree* tree, const char* table_name) {
-    BTreeNode* node = tree->root;
-
-    // Parcourir l'arbre pour vérifier si la table existe déjà
-    while (node != NULL) {
-
-        if (strcmp(node->table->table_name, table_name) == 0) {
-            return 1; 
-        }
-
-        // Si ce nœud est une feuille, on arrête la recherche
-        if (node->is_leaf) {
-            return 0; 
-        } else {
-            // parcourir les enfants pour continuer la recherche
-            node = node->children[0];
-        }
-    }
-
-    return 0;  // la table n'existe pas
+    return table_exists_recursive(tree->root, table_name);
 }
 
+int table_exists_recursive(BTreeNode* node, const char* table_name) {
+    if (node == NULL) {
+        return 0;
+    }
+
+    // Vérifie si la table du nœud actuel correspond
+    if (node->table != NULL && strcmp(node->table->table_name, table_name) == 0) {
+        return 1; // Table trouvée
+    }
+
+    // Parcourir chaque enfant pour vérifier toutes les tables
+    for (int i = 0; i < node->num_children; i++) {
+        if (table_exists_recursive(node->children[i], table_name)) {
+            return 1; 
+        }
+    }
+
+    return 0; 
+}
+
+
 void show_tables_recursive(BTreeNode* node) {
-    if (node == NULL || node->table == NULL) {
+    if (node == NULL) {
         return;
     }
-    printf("| %-13s |\n", node->table->table_name);
+    
+    if (node->table != NULL) {
+        printf("| %-13s |\n", node->table->table_name);
+    }
 
-    // Parcours récursif pour chaque enfant
     for (int i = 0; i < node->num_children; i++) {
         show_tables_recursive(node->children[i]);
     }
 }
 
 void show_tables(BTreeNode* node) {
-    if (node == NULL) {
+    if (node == NULL || (node->table == NULL && node->num_children == 0)) {
         printf("No table exists in the database.\n");
         return;
     }
@@ -100,6 +105,7 @@ void show_tables(BTreeNode* node) {
 
     printf("-----------------\n");
 }
+
 
 
 
