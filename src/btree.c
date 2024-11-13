@@ -280,6 +280,6 @@ void sauvegarde(BTree* tree) {
         }
         closedir(dir);
     } else {
-        printf("Error: file not found.\n");
+        printf("The database is empty, there is no backup file.\n");
     }
 }
