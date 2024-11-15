@@ -6,6 +6,7 @@
 #include "table.h"
 #include "btree.h"
 #include "input.h"
+#include "auth.h"
 
 
 InputBuffer* input_buffer;
@@ -100,6 +101,12 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
 void execute_statement(Statement* statement) {
     switch (statement->type) {
         case (STATEMENT_CREATE_TABLE): {
+
+            if (!has_permission("admin")){
+            printf("Error: You do not have permission to CREATE TABLE.\n");
+            return;
+            } 
+
             char table_name[100];
             int matched = sscanf(input_buffer->buffer, "CREATE TABLE %99s", table_name);
 
@@ -148,6 +155,11 @@ void execute_statement(Statement* statement) {
         case (STATEMENT_INSERT): {
             char table_name[100];
             char values[100];
+
+            if (!has_permission("admin")){
+            printf("Error: You do not have permission to INSERT DATA.\n");
+            return;
+            } 
 
             int matched = sscanf(input_buffer->buffer, "INSERT INTO %99s VALUES (%99[^\n])", table_name, values);
 
@@ -253,6 +265,10 @@ void execute_statement(Statement* statement) {
         // supprimer tous les enregistrements
             case (STATEMENT_DELETE_ALL): {
             char table_name[100];
+            if (!has_permission("admin")){
+            printf("Error: You do not have permission to DELETE DATA.\n");
+            return;
+            } 
             
             int matched = sscanf(input_buffer->buffer, "DELETE FROM %99s", table_name);
             if (matched != 1) {
@@ -273,6 +289,11 @@ void execute_statement(Statement* statement) {
         //supprimer la table dans la bdd
         case (STATEMENT_DROP_TABLE): {
             char table_name[100];
+
+            if (!has_permission("admin")){
+            printf("Error: You do not have permission to DROP TABLE.\n");
+            return;
+            } 
             
             int matched = sscanf(input_buffer->buffer, "DROP TABLE %99s", table_name);
             if (matched != 1) {
@@ -287,6 +308,11 @@ void execute_statement(Statement* statement) {
        //supprimer un enregistrement dans la bdd selon une condition
        case STATEMENT_DELETE_WHERE: {
             char table_name[100], field_name[100], value[100];
+
+            if (!has_permission("admin")){
+            printf("Error: You do not have permission to DELETE DATA.\n");
+            return;
+            } 
             
             int matched = sscanf(input_buffer->buffer, "DELETE FROM %99s WHERE %99s = %99s", table_name, field_name, value);
             if (matched != 3) {
@@ -307,6 +333,11 @@ void execute_statement(Statement* statement) {
 
         case (STATEMENT_UPDATE): {
             char table_name[100], field_to_update[100], new_value[100], where_field[100], where_value[100];
+
+            if (!has_permission("admin")){
+            printf("Error: You do not have permission to UPDATE TABLES.\n");
+            return;
+            } 
             
             int matched = sscanf(input_buffer->buffer, "UPDATE %99s SET %99[^=]=%99[^ ] WHERE %99[^=]=%99s",
                                 table_name, field_to_update, new_value, where_field, where_value);
