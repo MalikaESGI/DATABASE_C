@@ -28,7 +28,8 @@ typedef enum {
     STATEMENT_DELETE_WHERE,
     STATEMENT_DELETE_ALL,
     STATEMENT_DROP_TABLE,
-    STATEMENT_UPDATE 
+    STATEMENT_UPDATE,
+    STATEMENT_MENU 
     
  } StatementType;
 
@@ -95,6 +96,11 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
     statement->type = STATEMENT_UPDATE;
     return PREPARE_SUCCESS;
     }
+
+    if (strncmp(input_buffer->buffer, "MENU", 4) == 0) {
+    statement->type = STATEMENT_MENU;
+    return PREPARE_SUCCESS;
+   }
     return PREPARE_UNRECOGNIZED_STATEMENT;
 }
 
@@ -263,7 +269,7 @@ void execute_statement(Statement* statement) {
        }
 
         // supprimer tous les enregistrements
-            case (STATEMENT_DELETE_ALL): {
+        case (STATEMENT_DELETE_ALL): {
             char table_name[100];
             if (!has_permission("admin")){
             printf("Error: You do not have permission to DELETE DATA.\n");
@@ -356,6 +362,40 @@ void execute_statement(Statement* statement) {
             update_records(table, field_to_update, new_value, where_field, where_value);
             break;
         }
+
+        case (STATEMENT_MENU): {
+            printf("\n--- Database Command Menu ---\n");
+            printf("1. CREATE TABLE table_name\n");
+            printf("   Description: Creates a new table with fields specified by the user.\n\n");
+
+            printf("2. INSERT INTO table_name VALUES(value1, value2, ...)\n");
+            printf("   Description: Inserts a new record into the specified table.\n\n");
+
+            printf("3. SELECT * FROM table_name\n");
+            printf("   Description: Displays all records from the specified table.\n\n");
+
+            printf("4. SELECT * FROM table_name WHERE field_name = value\n");
+            printf("   Description: Displays records from the table matching the condition.\n\n");
+
+            printf("5. DELETE FROM table_name WHERE field_name = value\n");
+            printf("   Description: Deletes records from the table matching the condition.\n\n");
+
+            printf("6. DELETE FROM table_name\n");
+            printf("   Description: Deletes all records from the specified table.\n\n");
+
+            printf("7. DROP TABLE table_name\n");
+            printf("   Description: Deletes the specified table from the database.\n\n");
+
+            printf("8. SHOW TABLES\n");
+            printf("   Description: Displays all tables in the database.\n\n");
+
+            printf("9. UPDATE table_name SET field_name=value WHERE field_name=value\n");
+            printf("   Description: Updates records in the table matching the condition.\n\n");
+
+            printf("--- End of Menu ---\n");
+        break;
+}
+
 
     
 

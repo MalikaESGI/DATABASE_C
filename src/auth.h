@@ -12,4 +12,4 @@ int has_permission(const char* required_role);
 int authenticate_user(Credentials* creds);
 int load_env(Credentials* creds);
 
-#endif // AUTHENTICATION_H
+#endif
