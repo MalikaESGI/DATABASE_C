@@ -4,6 +4,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include "table.h"
 
 BTree* create_btree(int t) {
     BTree* tree = (BTree*)malloc(sizeof(BTree));
@@ -92,6 +93,7 @@ void show_tables_recursive(BTreeNode* node) {
     }
 }
 
+
 void show_tables(BTreeNode* node) {
     if (node == NULL || (node->table == NULL && node->num_children == 0)) {
         printf("No table exists in the database.\n");
@@ -105,8 +107,6 @@ void show_tables(BTreeNode* node) {
 
     printf("-----------------\n");
 }
-
-
 
 
 Table* search_btree(BTree* tree, const char* table_name) {
@@ -201,7 +201,7 @@ int delete_table_recursive(BTree* tree, BTreeNode* node, BTreeNode* parent, cons
         }
     }
 
-    return 0; // La table n'a pas été trouvée dans ce nœud
+    return 0; // table non trouvé
 }
 
 
