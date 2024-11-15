@@ -8,7 +8,7 @@ CFLAGS = -Wall -Wextra -g
 TARGET = database
 
 # Source files
-SOURCES = src/main.c src/btree.c src/table.c src/input.c src/repl.c
+SOURCES = src/main.c src/btree.c src/table.c src/input.c src/repl.c src/auth.c
 
 # Object files
 OBJECTS = $(SOURCES:.c=.o)
