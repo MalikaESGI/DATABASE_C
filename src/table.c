@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <sys/stat.h>
+#include <direct.h>
 #include <sys/types.h>
 #include "btree.h"
 
@@ -289,9 +290,12 @@ void create_backup_file(const char* table_name, Table* table) {
     // vérifier si le dossier de sauvegarde existe 
     struct stat st = {0};
     if (stat("sauvegarde", &st) == -1) {
-        mkdir("sauvegarde", 0700); 
+        #ifdef _WIN32
+            mkdir("sauvegarde");
+        #else
+            mkdir("sauvegarde", 0700);
+        #endif
     }
-
     char filepath[256];
     snprintf(filepath, sizeof(filepath), "sauvegarde/%s.txt", table_name);
 
