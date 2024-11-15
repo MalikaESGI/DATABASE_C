@@ -24,7 +24,7 @@ typedef enum {
     STATEMENT_CREATE_TABLE,
     STATEMENT_SHOW_TABLES,
     STATEMENT_SELECT_WHERE,
-    STATEMENT_DELETE_BY_ID,
+    STATEMENT_DELETE_WHERE,
     STATEMENT_DELETE_ALL,
     STATEMENT_DROP_TABLE,
     STATEMENT_UPDATE 
@@ -78,7 +78,7 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
     if (strncmp(input_buffer->buffer, "DELETE FROM", 11) == 0) 
     {
         if (strstr(input_buffer->buffer, "WHERE")) {
-            statement->type = STATEMENT_DELETE_BY_ID;
+            statement->type = STATEMENT_DELETE_WHERE;
         } else {
             statement->type = STATEMENT_DELETE_ALL;
         }
@@ -283,6 +283,27 @@ void execute_statement(Statement* statement) {
             delete_table(btree, table_name);
             break;
        }
+
+       //supprimer un enregistrement dans la bdd selon une condition
+       case STATEMENT_DELETE_WHERE: {
+            char table_name[100], field_name[100], value[100];
+            
+            int matched = sscanf(input_buffer->buffer, "DELETE FROM %99s WHERE %99s = %99s", table_name, field_name, value);
+            if (matched != 3) {
+                printf("Error: Syntax error in the DELETE command.\n");
+                return;
+            }
+
+            Table* table = search_btree(btree, table_name);
+            if (table == NULL) {
+                printf("Error: Table '%s' not found.\n", table_name);
+                return;
+            }
+
+            // Suppression des enregistrements correspondant à la condition
+            delete_from_table_with_condition(table, field_name, value);
+            break;
+        }
 
         case (STATEMENT_UPDATE): {
             char table_name[100], field_to_update[100], new_value[100], where_field[100], where_value[100];

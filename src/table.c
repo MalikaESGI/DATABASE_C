@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "btree.h"
 
 Table* create_table(const char* table_name) {
     Table* table = (Table*)calloc(1, sizeof(Table)); //calloc pour initialiser à zéro
@@ -241,6 +242,47 @@ void delete_all_records(Table* table) {
 
     printf("All records in the table '%s' have been deleted.\n", table->table_name);
 }
+
+void delete_from_table_with_condition(Table* table, const char* field_name, const char* value) {
+    int field_index = -1;
+
+    // Rechercher le champ dans la table
+    for (int j = 0; j < table->num_fields; j++) {
+        if (strcasecmp(table->fields[j].field_name, field_name) == 0) {
+            field_index = j;
+            break;
+        }
+    }
+    if (field_index == -1) {
+        printf("Error: Field '%s' not found in table '%s'.\n", field_name, table->table_name);
+        return;
+    }
+
+    int new_num_records = 0;
+
+    // Supprimer les enregistrements selon la condition
+    for (int i = 0; i < table->num_records; i++) {
+        if (strcmp(table->records[i].values[field_index], value) != 0) {
+            // Conserver l'enregistrement
+            table->records[new_num_records++] = table->records[i];
+        } else {
+            // Libérer la mémoire pour les enregistrements supprimés
+            for (int k = 0; k < table->num_fields; k++) {
+                free(table->records[i].values[k]);
+            }
+            free(table->records[i].values);
+        }
+    }
+
+    // Mettre à jour le nombre d'enregistrements
+    table->num_records = new_num_records;
+
+    // Mettre à jour le fichier de sauvegarde
+    update_backup_file(table);
+
+    printf("Records matching the condition have been deleted from '%s'.\n", table->table_name);
+}
+
 
 
 void create_backup_file(const char* table_name, Table* table) {

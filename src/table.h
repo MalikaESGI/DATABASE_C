@@ -28,6 +28,7 @@ void save_record_to_file(Table* table, char** values, int num_values);
 void select_from_table(Table* table);
 void select_from_table_where(Table* table, const char* field_name, const char* value);
 void delete_all_records(Table* table);
+void delete_from_table_with_condition(Table* table, const char* field_name, const char* value);
 void create_backup_file(const char* table_name, Table* table);
 void update_records(Table* table, const char* field_to_update, const char* new_value, const char* where_field, const char* where_value);
 void update_backup_file(Table* table);
