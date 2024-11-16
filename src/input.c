@@ -14,8 +14,50 @@ InputBuffer* new_input_buffer() {
     return input_buffer;
 }
 
+ssize_t my_getline(char **lineptr, size_t *n, FILE *stream) {
+    if (!lineptr || !n || !stream) {
+        return -1;
+    }
+
+    size_t pos = 0;
+    int c;
+
+    if (*lineptr == NULL) {
+        *lineptr = malloc(128); // taille initiale arbitraire
+        if (*lineptr == NULL) {
+            return -1;
+        }
+        *n = 128;
+    }
+
+    while ((c = fgetc(stream)) != EOF) {
+        if (pos + 1 >= *n) {
+            size_t new_size = *n * 2;
+            char *new_ptr = realloc(*lineptr, new_size);
+            if (!new_ptr) {
+                return -1;
+            }
+            *lineptr = new_ptr;
+            *n = new_size;
+        }
+
+        (*lineptr)[pos++] = c;
+
+        if (c == '\n') {
+            break;
+        }
+    }
+
+    if (pos == 0 && c == EOF) {
+        return -1;
+    }
+
+    (*lineptr)[pos] = '\0';
+    return pos;
+}
+
 void read_input(InputBuffer* input_buffer) {
-    ssize_t bytes_read = getline(&(input_buffer->buffer), &(input_buffer->buffer_length), stdin);
+    ssize_t bytes_read = my_getline(&(input_buffer->buffer), &(input_buffer->buffer_length), stdin);
 
     if (bytes_read <= 0) {
         printf("Error reading input\n");
