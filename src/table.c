@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <sys/stat.h>
-#include <direct.h>
+#ifdef _WIN32
+  #include <direct.h>
+#endif
 #include <sys/types.h>
 #include "btree.h"
 
