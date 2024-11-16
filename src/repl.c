@@ -405,8 +405,8 @@ void execute_statement(Statement* statement) {
         break;
      }
       case (STATEMENT_EXIT): {
-        printf("BY");
-        return;
+        printf("BY\n");
+        exit(0);
       }
 
         default:
