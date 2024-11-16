@@ -164,68 +164,70 @@ void execute_statement(Statement* statement) {
             break;
         }
 
-        case (STATEMENT_INSERT): {
-            char table_name[100];
-            char values[100];
+case (STATEMENT_INSERT): {
+    char table_name[100];
+    char values[100];
 
-            if (!has_permission("admin")){
-            printf("Error: You do not have permission to INSERT DATA.\n");
-            return;
-            } 
+    if (!has_permission("admin")){
+        printf("Error: You do not have permission to INSERT DATA.\n");
+        return;
+    } 
 
-            int matched = sscanf(input_buffer->buffer, "INSERT INTO %99s VALUES (%99[^\n])", table_name, values);
+    int matched = sscanf(input_buffer->buffer, "INSERT INTO %99s VALUES (%99[^\n])", table_name, values);
 
-            if (matched != 2) {
-                printf("Error : Syntax error in the INSERT command.\n");
-                return;
-            }
+    if (matched != 2) {
+        printf("Error : Syntax error in the INSERT command.\n");
+        return;
+    }
 
-            // Rechercher la table dans le B-tree
-            Table* table = search_btree(btree, table_name);
-            if (table == NULL) {
-                printf("Error : The table '%s' does not exist.\n", table_name);
-                return;
-            }
+    // Supprimer les parenthèses au début et à la fin de `values`
+    if (values[0] == '(') {
+        memmove(values, values + 1, strlen(values));
+    }
 
-            // Le nombre de champs dans la table
-            int expected_values_count = table->num_fields;
+    size_t len = strlen(values);
+    if (values[len - 1] == ')') {
+        values[len - 1] = '\0';
+    }
 
-            // tableau pour stocker les valeurs après la découpe
-            char* values_array[expected_values_count];
-            int index = 0;
+    // Rechercher la table dans le B-tree
+    Table* table = search_btree(btree, table_name);
+    if (table == NULL) {
+        printf("Error : The table '%s' does not exist.\n", table_name);
+        return;
+    }
 
-            //strtok pour découper les valeurs
-            char* token = strtok(values, ",");
-            while (token != NULL) {
-                while (*token == ' ') token++;  //Retirer les espaces des valeurs sasies
-                values_array[index] = strdup(token);
-                index++;
-                token = strtok(NULL, ",");
-            }
-            // printf("%d, %d\n", index, expected_values_count); 
+    int expected_values_count = table->num_fields;
+    char* values_array[expected_values_count];
+    int index = 0;
 
-            // Vérifier du nombre de valeurs saisies
-            if (index != expected_values_count) {
-                printf("Error : The number of values does not match the table's fields.\n");
-                
-                // Libérer la mémoire
-                for (int i = 0; i < index; i++) {
-                    free(values_array[i]);
-                }
-                
-                return;
-            }
+    char* token = strtok(values, ",");
+    while (token != NULL) {
+        while (*token == ' ') token++;  // Retirer les espaces des valeurs
+        values_array[index] = strdup(token);
+        index++;
+        token = strtok(NULL, ",");
+    }
 
-            if (insert_record(table, values_array, expected_values_count) == 0) {
-                printf("Successful insertion into the table '%s'.\n", table_name);
-                save_record_to_file(table, values_array, expected_values_count);
-            }
-            for (int i = 0; i < expected_values_count; i++) {
-                free(values_array[i]);
-            }
-
-            break;
+    if (index != expected_values_count) {
+        printf("Error : The number of values does not match the table's fields.\n");
+        for (int i = 0; i < index; i++) {
+            free(values_array[i]);
         }
+        return;
+    }
+
+    if (insert_record(table, values_array, expected_values_count) == 0) {
+        printf("Successful insertion into the table '%s'.\n", table_name);
+        save_record_to_file(table, values_array, expected_values_count);
+    }
+
+    for (int i = 0; i < expected_values_count; i++) {
+        free(values_array[i]);
+    }
+    break;
+}
+
 
         case (STATEMENT_SHOW_TABLES):{
             printf("\n<--List of tables in the database--->\n");
