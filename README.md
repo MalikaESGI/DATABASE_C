@@ -41,6 +41,7 @@ Le projet utilise des structures de données: <B-trees> pour organiser et accéd
 
     - Menu d'Aide :
         <MENU> : Affiche la liste des commandes et leur syntaxe.
+        <EXIT> : Quitter la bdd
 
 * Sauvegarde et persistance des Données
     Les données de chaque table sont sauvegardées dans un fichier texte au format sauvegarde/table_name.txt, et recharger automatiquement lors de l'execution.
