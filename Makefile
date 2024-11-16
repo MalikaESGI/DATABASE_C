@@ -4,6 +4,14 @@ CC = gcc
 # Compiler flags
 CFLAGS = -Wall -Wextra -g
 
+# -Wall : Active tous les avertissements de compilation standard. 
+#		 Permet d'identifier des problèmes potentiels dans le code, comme des variables inutilisées ou des conversions implicites
+
+# -Wextra : Active des avertissements supplémentaires non inclus dans -Wall.
+# 			Fournit des avertissements plus stricts pour repérer des erreurs subtiles.
+
+# -g : Ajoute des informations de débogage dans l'exécutable.
+
 # Target executable name
 TARGET = database
 
