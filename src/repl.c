@@ -103,9 +103,9 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
     return PREPARE_SUCCESS;
    }
 
-   if (strcmp(input_buffer->buffer, "exit") == 0) {
+   if (sstrncmp(input_buffer->buffer, "EXIT", 4) == 0) {
         return STATEMENT_EXIT;
-    }
+}
     return PREPARE_UNRECOGNIZED_STATEMENT;
 }
 
