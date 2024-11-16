@@ -29,7 +29,8 @@ typedef enum {
     STATEMENT_DELETE_ALL,
     STATEMENT_DROP_TABLE,
     STATEMENT_UPDATE,
-    STATEMENT_MENU 
+    STATEMENT_MENU,
+    STATEMENT_EXIT,
     
  } StatementType;
 
@@ -101,6 +102,10 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
     statement->type = STATEMENT_MENU;
     return PREPARE_SUCCESS;
    }
+
+   if (strcmp(input_buffer->buffer, "exit") == 0) {
+        return STATEMENT_EXIT;
+    }
     return PREPARE_UNRECOGNIZED_STATEMENT;
 }
 
@@ -392,12 +397,16 @@ void execute_statement(Statement* statement) {
             printf("9. UPDATE table_name SET field_name=value WHERE field_name=value\n");
             printf("   Description: Updates records in the table matching the condition.\n\n");
 
+            printf("9. EXIT\n");
+            printf("   Description: Quit the database.\n\n");
+
             printf("--- End of Menu ---\n");
         break;
-}
-
-
-    
+     }
+      case (STATEMENT_EXIT): {
+        printf("BY");
+        return;
+      }
 
         default:
             printf("Unrecognized command.\n");
