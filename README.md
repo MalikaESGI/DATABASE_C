@@ -1,5 +1,6 @@
 #                   ######################################"README - Système de Base de Données en C ######################################
 
+#    NOM: MALIKA MECHKAL
 
 Ce projet est une implémentation d'un système de base de données en langage C. Il permet de créer, manipuler, et gérer des tables et des enregistrements, tout en offrant une structure sécurisée grâce à un système d'authentification basé sur des rôles (admin et user).
 
